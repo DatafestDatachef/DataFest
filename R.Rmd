@@ -1,0 +1,72 @@
+---
+title: "Datafest"
+author: "Haoluan Chen"
+date: "5/31/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(gamm4)
+library(knitr)
+library(readxl)
+library(MASS)
+library(forecast)
+library(timeSeries)
+library(timeDate)
+library(sarima)
+library(FitAR)
+library("fUnitRoots")
+library(ggplot2)
+
+Employment_rate <- read_excel("Employment_rate.xlsx")
+Before_covid <- read_excel("Before covid.xlsx")
+```
+
+```{r}
+# convert data into timeseries data format 
+tsData <-ts(Employment_rate, start = c(2016,4), frequency = 12)
+tsData
+
+beforeCovid <-ts(Before_covid, start = c(2016,4), frequency = 12)
+plot(beforeCovid)
+plot(tsData)
+
+#before covid 
+acf(beforeCovid, lag.max=34)
+pacf(beforeCovid, lag.max=34)
+
+
+components.ts = decompose(tsData)
+plot(components.ts)
+urkpssTest(tsData, type = c("tau"), lags = c("short"),use.lag = NULL, doplot = TRUE)
+tsstationary = diff(tsData, differences=1)
+plot(tsstationary)
+
+acf(tsData, lag.max=34)
+pacf(tsData, lag.max=34)
+```
+```{r}
+
+#before covid
+model <- auto.arima(beforeCovid, max.p = 12, max.q = 12, stationary = TRUE)
+fitARIMA <- arima(beforeCovid, order=c(2,0,0),seasonal = list(order = c(1,0,0), period = 12),method="ML")
+summary(fitARIMA)
+summary(model)
+# with covid 
+model2<- auto.arima(tsData, max.p = 12, max.q = 12, stationary = TRUE)
+summary(model2)
+
+plot(forecast(model,h = 12, level = c(95)))
+grid()
+
+plot(forecast(model2,h = 12, level = c(95)))
+grid()
+
+ggplot() + 
+  geom_line(data = forecast(model,h = 12, level = c(95)), aes(x = employment_total$date, y = Percent.Change), color = "red") +
+  geom_line(data = forecast(model2,h = 12, level = c(95)), aes(x = employment_total$date, y = Percent.Change), color = "blue") +
+  xlab('data_date') +
+  ylab('percent.change')
+```
+
