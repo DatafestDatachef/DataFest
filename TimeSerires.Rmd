@@ -1,0 +1,106 @@
+---
+title: "forecasting"
+author: "Yujie Li"
+date: "2020/6/7"
+output: html_document
+---
+```{r}
+library(knitr)
+library(readxl)
+library(MASS)
+library(forecast)
+library(timeSeries)
+library(timeDate)
+library(sarima)
+library(vars)
+library(tidyverse)
+```
+
+
+```{r}
+ET<-read_excel("employment total.xlsx") 
+tim1<-timeSequence(from = "2016-04-01", to = "2020-05-01", by = "month")
+ER<- timeSeries(ET[,"Employment rate"], charvec = tim1)
+
+ER1 = window(ER, start = "2016-04-01", end = "2020-02-01")
+ER2 = window(ER, start = "2016-04-01", end = "2020-05-01")
+ER1
+```
+
+```{r}
+par(mfrow=c(2,1), cex = 0.8)
+plot(ER1, type="b", pch = 18, main = "Employment Rate Before Outbreak")
+grid()
+plot(ER2, type="b", pch = 18, main = "Employment Rate Before and After Outbreak")
+grid()
+```
+
+
+
+```{r}
+mod.arima1<-auto.arima(ER1[,1], max.p = 52, max.q = 52, stationary = TRUE) 
+mod.arima2<-auto.arima(ER2[,1], max.p = 52, max.q = 52, stationary = TRUE) 
+
+```
+
+```{r}
+fc1 <- forecast(mod.arima1, h=24)
+fc2 <- forecast(mod.arima2, h=24)
+
+```
+
+```{r}
+autoplot(fc1, ylab = "Employment Rate in Percentage") + labs(title = "Forecast on Employment Rate Based on Data collected before the Outbreak", caption = "Data Source: Labour Force Survey - Statistics Canada") + theme_minimal() + xlim(2016,2022) + ylim(50, 67.5)
+
+
+autoplot(fc2, ylab = "Employment Rate in Percentage") + labs(title = "Forecast on Employment Rate Based on Data collected before and after the Outbreak", caption = "Data Source: Labour Force Survey - Statistics Canada") + theme_minimal() + xlim(2016,2022) + ylim(50, 67.5) 
+
+```
+
+
+```{r}
+LR1<-read_excel("LR.xlsx",sheet="Sheet1") 
+```
+
+
+```{r}
+simple.fit = lm(er~date, data=LR1)
+summary(simple.fit)
+```
+
+```{r}
+ggplot(data = LR1, aes(x = date, y = er)) + 
+  geom_point(color='blue') +
+  geom_smooth(method = "lm", se = FALSE) + ylim(50, 67.5) + theme_minimal()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
